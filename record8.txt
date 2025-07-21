@@ -1,0 +1,29 @@
+我能幫你做的：
+整理你目前分析模組成「可封裝的分析引擎」
+
+幫你設計「可上鏈訊號接口」的資料結構（例如 JSON + IPFS + 簡易合約上傳）
+
+保密你的策略邏輯，僅保留公開顯示的「冥月發言」「芯華推薦」
+
+有空再一步步寫出你的鏈上策略腳本（例如類似 eth-bot）
+
+
+. 學術論文
+雖不是專指 Patterson 提到的「恆星計畫」，但以下研究主題極相關：
+
+Understanding the Impacts of Dark Pools on Price Discovery
+探討資訊差、交易量與價格發現之間的作用機制
+eBay
++15
+arXiv
++15
+X (formerly Twitter)
++15
+。
+
+Optimal Allocation Strategies for the Dark Pool Problem
+提出如何最佳配置訂單於暗池與交易所之間的策略框架
+arXiv
+。
+
+這類論文能幫你理解「暗池系統設計」原理，雖沒直接提「恆星計畫」，但在概念上相輔相成。
