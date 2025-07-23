@@ -1,0 +1,106 @@
+根據您提供的 BingX API 文件，我們可以實作以下兩個函數：
+
+get_position_profit()：查詢指定交易對的未實現盈虧。
+
+close_position()：對指定交易對的持倉進行市價平倉。
+Stack Overflow
++3
+BingX
++3
+GitHub
++3
+
+以下是這兩個函數的實作範例，已整合至您先前的 Colab 腳本中：
+
+python
+複製
+編輯
+import time
+import requests
+import hmac
+import hashlib
+import json
+from urllib.parse import urlencode
+from linebot import LineBotApi
+from linebot.models import TextSendMessage
+
+# 設定參數
+API_KEY = 'YOUR_BINGX_API_KEY'
+SECRET_KEY = 'YOUR_BINGX_SECRET_KEY'
+BASE_URL = 'https://open-api.bingx.com'
+SYMBOL = 'BTC-USDT'
+TAKE_PROFIT_TRIGGER = 100
+STOP_PROFIT_THRESHOLD = 30
+LINE_CHANNEL_ACCESS_TOKEN = 'YOUR_LINE_CHANNEL_ACCESS_TOKEN'
+LINE_USER_ID = 'YOUR_LINE_USER_ID'
+
+line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
+
+def sign(params, secret_key):
+    query_string = urlencode(sorted(params.items()))
+    signature = hmac.new(secret_key.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest()
+    return signature
+
+def get_position_profit():
+    endpoint = '/openApi/swap/v2/user/positions'
+    url = BASE_URL + endpoint
+    timestamp = int(time.time() * 1000)
+    params = {
+        'apiKey': API_KEY,
+        'timestamp': timestamp,
+        'symbol': SYMBOL
+    }
+    params['sign'] = sign(params, SECRET_KEY)
+    response = requests.get(url, params=params)
+    data = response.json()
+    if data['code'] == 0 and data['data']:
+        position = data['data'][0]
+        return float(position.get('unrealizedProfit', 0))
+    else:
+        return 0
+
+def close_position():
+    endpoint = '/openApi/swap/v2/trade/closePosition'
+    url = BASE_URL + endpoint
+    timestamp = int(time.time() * 1000)
+    params = {
+        'apiKey': API_KEY,
+        'timestamp': timestamp,
+        'symbol': SYMBOL,
+        'positionSide': 'BOTH'  # 根據實際情況選擇 'LONG'、'SHORT' 或 'BOTH'
+    }
+    params['sign'] = sign(params, SECRET_KEY)
+    headers = {'Content-Type': 'application/json'}
+    response = requests.post(url, headers=headers, data=json.dumps(params))
+    data = response.json()
+    if data['code'] == 0:
+        print("已成功平倉")
+    else:
+        print(f"平倉失敗：{data['msg']}")
+
+def send_line_message(message):
+    line_bot_api.push_message(LINE_USER_ID, TextSendMessage(text=message))
+
+first_hit = False
+
+while True:
+    profit = get_position_profit()
+    
+    if not first_hit and profit > TAKE_PROFIT_TRIGGER:
+        first_hit = True
+        send_line_message(f'盈利用戶已超過 {TAKE_PROFIT_TRIGGER} USDT，進入監控模式。')
+    
+    if first_hit and profit < STOP_PROFIT_THRESHOLD:
+        close_position()
+        send_line_message(f'盈利用戶回落至 {profit} USDT，已自動平倉。')
+        break  # 或者將 first_hit 設為 False，重新監控
+
+    time.sleep(5)  # 每5秒查詢一次
+請注意：
+
+positionSide 參數需根據您的實際持倉方向設定，可能的值包括 'LONG'、'SHORT' 或 'BOTH'。
+
+請確保您的 API Key 具有相應的權限，並已正確設置 IP 白名單（如有需要）。
+BingX
+
+如果您需要進一步的協助，例如整合 Telegram 通知、部署至持續運行的環境（如 Replit 或 Railway），請隨時告訴我。
